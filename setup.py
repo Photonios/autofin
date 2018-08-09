@@ -52,8 +52,6 @@ setup(
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     ],
     cmdclass={
-        "format": create_command(
-            "Formats the code", ["black", *find_packages(), "setup.py"]
-        )
+        "format": create_command("Formats the code", ["black", "autofin", "setup.py"])
     },
 )
