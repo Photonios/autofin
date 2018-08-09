@@ -1,3 +1,4 @@
+from autofin import settings
 from autofin.util import GlorifiedEnum
 
 from .electrica import Electrica
@@ -12,4 +13,9 @@ class CreditorName(GlorifiedEnum):
     ELECTRICA = "electrica"
 
 
-creditors = {CreditorName.ELECTRICA: Electrica("adela.suhani@gmail.com", "aoeuid123")}
+creditors_class_map = {CreditorName.ELECTRICA: Electrica}
+
+creditors = {
+    name: creditors_class_map[name](*credentials)
+    for name, credentials in settings.CREDITORS.items()
+}

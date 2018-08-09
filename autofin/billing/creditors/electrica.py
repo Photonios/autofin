@@ -1,3 +1,5 @@
+import structlog
+
 from datetime import datetime
 
 from selenium import webdriver
@@ -5,6 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from autofin.billing import PaymentStatus, Invoice
+
+LOGGER = structlog.get_logger(__name__)
 
 
 class Electrica:
@@ -44,8 +48,12 @@ class Electrica:
     def get_latest_invoice(self) -> Invoice:
         """Gets the latest bill, paid or not paid."""
 
+        LOGGER.info("Getting latest invoice from Electrica")
+
         browser = webdriver.Chrome()
         browser.get(self.LOGIN_URL)
+
+        LOGGER.debug("Logging into Electrica", url=self.LOGIN_URL)
 
         email_input = browser.find_element(*self.SELECTORS["email_input"])
         password_input = browser.find_element(*self.SELECTORS["password_input"])
@@ -54,26 +62,25 @@ class Electrica:
         password_input.send_keys(self._password)
         password_input.send_keys(Keys.ENTER)
 
+        LOGGER.debug(
+            "Navigating to invoices section for Electrica", url=self.INVOICES_URL
+        )
+
         browser.get(self.INVOICES_URL)
 
-        invoice_date = int(
-            browser.find_element(*self.SELECTORS["invoice_date"]).get_attribute(
-                "data-order"
-            )
+        invoice_date_elem = browser.find_element(*self.SELECTORS["invoice_date"])
+        invoice_due_date_elem = browser.find_element(
+            *self.SELECTORS["invoice_due_date"]
         )
-        invoice_due_date = int(
-            browser.find_element(*self.SELECTORS["invoice_due_date"]).get_attribute(
-                "data-order"
-            )
-        )
-        invoice_payment_status = browser.find_element(
+        invoice_payment_status_elem = browser.find_element(
             *self.SELECTORS["invoice_payment_status"]
-        ).text
-        invoice_amount = float(
-            browser.find_element(*self.SELECTORS["invoice_amount"]).text.replace(
-                ",", "."
-            )
         )
+        invoice_amount_elem = browser.find_element(*self.SELECTORS["invoice_amount"])
+
+        invoice_date = int(invoice_date_elem.get_attribute("data-order"))
+        invoice_due_date = int(invoice_due_date_elem.get_attribute("data-order"))
+        invoice_payment_status = invoice_payment_status_elem.text
+        invoice_amount = float(invoice_amount_elem.text.replace(",", "."))
 
         browser.close()
 
@@ -87,4 +94,5 @@ class Electrica:
             else PaymentStatus.UNPAID,
         )
 
+        LOGGER.info("Found latest Electria invoice", invoice=invoice)
         return invoice

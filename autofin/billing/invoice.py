@@ -39,19 +39,19 @@ class Invoice:
         self.due_date = due_date
         self.payment_status = payment_status
 
+    def __str__(self):
+        """Gets a human-readable textual representation of this invoice."""
+
+        textual = "%s" % self.creditor
+        textual += "\nDate: %s" % self.date.strftime("%d-%b-%Y")
+        textual += "\nDue on: %s" % self.due_date.strftime("%d-%b-%Y")
+        textual += "\nAmount: %s RON" % self.amount
+        textual += "\nStatus: %s" % self.payment_status.upper()
+
+        return textual
+
     def __repr__(self):
         """Gets a textual representation of this invoice."""
         return str(
             [self.creditor, self.amount, self.date, self.due_date, self.payment_status]
-        )
-
-    def __str__(self):
-        """Gets a human-readable textual representation of this invoice."""
-
-        return "%s - %sRON (%s, due on %s): %s" % (
-            self.creditor,
-            self.amount,
-            self.date.strftime("%d-%b-%Y"),
-            self.due_date.strftime("%d-%b-%Y"),
-            self.payment_status.upper(),
         )
