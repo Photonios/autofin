@@ -4,3 +4,4 @@ venv/
 *.pyc
 *.o
 __pycache__
+db/
