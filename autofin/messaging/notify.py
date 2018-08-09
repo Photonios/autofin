@@ -13,9 +13,7 @@ def notify_one(user: User, message: str) -> None:
     twillio_client = Client(settings.TWILLIO_ACCOUNT_SID, settings.TWILLIO_AUTH_TOKEN)
 
     twillio_client.messages.create(
-        messaging_service_sid="MG6c4c1791a0024364bfbc58d67f1c27a2",
-        body=message,
-        to=user.phone_number,
+        from_=settings.TWILLIO_PHONE_NUMBER, body=message, to=user.phone_number
     )
 
     LOGGER.info("Send notification to", user=user, message=message)
