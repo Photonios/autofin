@@ -49,7 +49,7 @@ def twillio_webhook_server():
 
     port = settings.TWILLIO_WEBHOOK_SERVER_PORT
     LOGGER.info("Twillio webhook server starting", port=port)
-    web.run_app(app, port=int(port))
+    web.run_app(app, port=int(port), print=None)
 
 
 if __name__ == "__main__":

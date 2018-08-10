@@ -6,6 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
+from autofin import selenium
 from autofin.billing import PaymentStatus, Invoice
 
 LOGGER = structlog.get_logger(__name__)
@@ -50,7 +51,7 @@ class Electrica:
 
         LOGGER.info("Getting latest invoice from Electrica")
 
-        browser = webdriver.Chrome()
+        browser = selenium.create_browser()
         browser.get(self.LOGIN_URL)
 
         LOGGER.debug("Logging into Electrica", url=self.LOGIN_URL)

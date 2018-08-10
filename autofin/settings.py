@@ -23,3 +23,7 @@ CREDITORS = {
 
 # Storage configuration
 STORAGE_PATH = environ.get("STORAGE_PATH", "/Users/swen/Code/autofin/db")
+
+# Selenium configuration
+SELENIUM_HEADLESS_ENABLED = bool(int(environ.get("SELENIUM_HEADLESS_ENABLED", "0")))
+SELENIUM_CHROME_DRIVER_PATH = environ.get("SELENIUM_CHROME_DRIVER_PATH", None)
