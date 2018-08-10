@@ -14,3 +14,12 @@ class MessageFormatter:
 
         message = "%s - Bills overview\n\n%s" % (settings.MESSAGE_HEADER, invoices)
         return message
+
+    @staticmethod
+    def unknown_command(command: str) -> str:
+        """Formats the message for an unknown command."""
+
+        message = "%s - Unknown command\n\n" % settings.MESSAGE_HEADER
+        message += "'%s' is not a known command. Did you spell it correctly?" % command
+
+        return message
