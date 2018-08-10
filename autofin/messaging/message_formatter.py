@@ -23,3 +23,13 @@ class MessageFormatter:
         message += "'%s' is not a known command. Did you spell it correctly?" % command
 
         return message
+
+    @staticmethod
+    def error(error_id: str) -> str:
+        """Formats a message for an error that occurred."""
+
+        message = "%s - Something went wrong\n\n" % settings.MESSAGE_HEADER
+        message += "Error ID: %s" % error_id
+        message += "\n\nPlease try again."
+
+        return message

@@ -4,6 +4,7 @@ from aiohttp import web
 from urllib.parse import unquote
 
 from autofin import settings
+from autofin.error import capture_error, capture_error_context
 from autofin.billing import InvoiceManager
 from autofin.messaging import MessageFormatter
 
@@ -13,32 +14,43 @@ LOGGER = structlog.get_logger(__name__)
 async def on_sms_received(request):
     """HTTP handler for the webhook that is called when
     a SMS is received."""
-    logger = LOGGER.bind(raw_body=await request.text())
 
-    data = await request.post()
+    try:
+        context = dict(raw_body=await request.text())
+        capture_error_context(**context)
+        logger = LOGGER.bind(**context)
 
-    from_ = data.get("From")
-    if not from_:
-        logger.error("Received bad request, missing from")
-        return web.Response(status=400, text="Missing 'From'")
+        data = await request.post()
 
-    body = data.get("Body")
-    if not body:
-        logger.error("Received bad request, missing body")
-        return web.Response(status=400, text="Missing 'Body'")
+        from_ = data.get("From")
+        if not from_:
+            logger.error("Received bad request, missing from")
+            return web.Response(status=400, text="Missing 'From'")
 
-    logger = logger.bind(from_=from_, body=body)
-    logger.debug("Received SMS")
+        body = data.get("Body")
+        if not body:
+            logger.error("Received bad request, missing body")
+            return web.Response(status=400, text="Missing 'Body'")
 
-    command = body.lower().replace(" ", "")
-    if command == "getbills":
-        logger.info("Received command through SMS", command=command)
-    else:
-        logger.error("Receive unknown command through SMS", command=command)
-        return web.Response(text=MessageFormatter.unknown_command(command))
+        context["message"] = body
+        context["phone_number"] = from_
+        logger = logger.bind(**context)
+        capture_error_context(**context)
 
-    invoices = InvoiceManager().get_latest_invoices()
-    return web.Response(text=MessageFormatter.invoices(invoices))
+        logger.debug("Received SMS")
+
+        command = body.lower().replace(" ", "")
+        if command == "getbills":
+            logger.info("Received command through SMS", command=command)
+        else:
+            logger.error("Receive unknown command through SMS", command=command)
+            return web.Response(text=MessageFormatter.unknown_command(command))
+
+        invoices = InvoiceManager().get_latest_invoices()
+        return web.Response(text=MessageFormatter.invoices(invoices))
+    except Exception:
+        error_id = capture_error()
+        return web.Response(text=MessageFormatter.error(error_id))
 
 
 def twillio_webhook_server():

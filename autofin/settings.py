@@ -35,3 +35,7 @@ STORAGE_PATH = environ.get("STORAGE_PATH", os.path.join(root_dir, "db"))
 # Selenium configuration
 SELENIUM_HEADLESS_ENABLED = bool(int(environ.get("SELENIUM_HEADLESS_ENABLED", "0")))
 SELENIUM_CHROME_DRIVER_PATH = environ.get("SELENIUM_CHROME_DRIVER_PATH", None)
+
+# Sentry configuration
+SENTRY_DSN = environ.get("SENTRY_DSN", None)
+SENTRY_ENVIRONMENT = environ.get("SENTRY_ENVIRONMENT", "live")
