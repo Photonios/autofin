@@ -1,8 +1,11 @@
+import structlog
+
 from raven import Client
 
 from autofin import settings
 
 __raven__ = None
+LOGGER = structlog.get_logger(__name__)
 
 
 if settings.SENTRY_DSN:
@@ -11,6 +14,8 @@ if settings.SENTRY_DSN:
         environment=settings.SENTRY_ENVIRONMENT,
         auto_log_stacks=True,
     )
+
+    LOGGER.info("Sentry enabled", env=settings.SENTRY_ENVIRONMENT)
 
 
 def capture_error() -> str:
