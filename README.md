@@ -6,4 +6,6 @@ Autofin is a collection of small programs that tracks things related to our fina
 
 * Auto-format all the code.
 
+    ```
     λ python setup.py format
+    ```
