@@ -1,3 +1,5 @@
+import os
+
 from os import environ
 
 
@@ -22,7 +24,9 @@ CREDITORS = {
 }
 
 # Storage configuration
-STORAGE_PATH = environ.get("STORAGE_PATH", "/Users/swen/Code/autofin/db")
+STORAGE_PATH = environ.get(
+    "STORAGE_PATH", os.path.join(os.path.abspath(os.path.dirname(__file__)), "db")
+)
 
 # Selenium configuration
 SELENIUM_HEADLESS_ENABLED = bool(int(environ.get("SELENIUM_HEADLESS_ENABLED", "0")))
