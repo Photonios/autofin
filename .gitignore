@@ -5,3 +5,4 @@ venv/
 *.o
 __pycache__
 db/
+local.env

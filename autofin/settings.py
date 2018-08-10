@@ -1,7 +1,13 @@
 import os
 
 from os import environ
+from dotenv import load_dotenv, find_dotenv
 
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Load env vars from a file if it exists
+dot_file = os.path.join(root_dir, "local.env")
+load_dotenv(dotenv_path=dot_file)
 
 # Twillio configuration
 TWILLIO_ACCOUNT_SID = environ.get(
@@ -24,9 +30,7 @@ CREDITORS = {
 }
 
 # Storage configuration
-STORAGE_PATH = environ.get(
-    "STORAGE_PATH", os.path.join(os.path.abspath(os.path.dirname(__file__)), "db")
-)
+STORAGE_PATH = environ.get("STORAGE_PATH", os.path.join(root_dir, "db"))
 
 # Selenium configuration
 SELENIUM_HEADLESS_ENABLED = bool(int(environ.get("SELENIUM_HEADLESS_ENABLED", "0")))
