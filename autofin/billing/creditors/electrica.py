@@ -8,16 +8,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from autofin import selenium
 from autofin.billing import PaymentStatus, Invoice
+
+from .creditor import Creditor
 
 LOGGER = structlog.get_logger(__name__)
 
 
-class Electrica:
+class Electrica(Creditor):
     """Provides access to Electrica bills."""
 
-    NAME = "Electrica SRL"
     LOGIN_URL = "https://myelectrica.ro/index.php?pagina=login"
     INVOICES_URL = "https://myelectrica.ro/index.php?pagina=facturile-mele"
     SELECTORS = {
@@ -45,6 +45,8 @@ class Electrica:
     def __init__(self, email: str, password: str) -> None:
         """Initializes a new instance of :see:Electrica."""
 
+        super().__init__("Electrica SRL")
+
         self._email = email
         self._password = password
 
@@ -53,7 +55,7 @@ class Electrica:
 
         LOGGER.info("Getting latest invoice from Electrica")
 
-        browser = selenium.create_browser(self.NAME)
+        browser = self.browser_manager.create_browser()
         browser.get(self.INVOICES_URL)
 
         try:
@@ -93,10 +95,10 @@ class Electrica:
         invoice_payment_status = invoice_payment_status_elem.text
         invoice_amount = float(invoice_amount_elem.text.replace(",", "."))
 
-        browser.close()
+        self.browser_manager.destroy_browser()
 
         invoice = Invoice(
-            self.NAME,
+            self.name,
             invoice_amount,
             datetime.fromtimestamp(invoice_date),
             datetime.fromtimestamp(invoice_due_date),

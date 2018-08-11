@@ -8,16 +8,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from autofin import selenium
 from autofin.billing import PaymentStatus, Invoice
+
+from .creditor import Creditor
 
 LOGGER = structlog.get_logger(__name__)
 
 
-class EON:
+class EON(Creditor):
     """Provides access to EON bills."""
 
-    NAME = "E-on"
     LOGIN_URL = "https://myline-eon.ro/login"
     INVOICES_URL = "https://myline-eon.ro/facturile-mele"
     SELECTORS = {
@@ -46,6 +46,8 @@ class EON:
     def __init__(self, email: str, password: str) -> None:
         """Initializes a new instance of :see:EON."""
 
+        super().__init__("E-on")
+
         self._email = email
         self._password = password
 
@@ -54,7 +56,7 @@ class EON:
 
         LOGGER.info("Getting latest invoice from EON")
 
-        browser = selenium.create_browser(self.NAME)
+        browser = self.browser_manager.create_browser()
         browser.get(self.INVOICES_URL)
 
         try:
@@ -98,10 +100,10 @@ class EON:
         invoice_payment_status = invoice_payment_status_elem.text
         invoice_amount = invoice_amount_elem.text
 
-        browser.close()
+        self.browser_manager.destroy_browser()
 
         invoice = Invoice(
-            self.NAME,
+            self.name,
             float(invoice_amount.replace(",", ".")),
             datetime.strptime(invoice_date, "%d.%m.%Y"),
             datetime.strptime(invoice_due_date, "%d.%m.%Y"),

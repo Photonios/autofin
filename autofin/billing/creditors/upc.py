@@ -8,16 +8,16 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from autofin import selenium
 from autofin.billing import PaymentStatus, Invoice
+
+from .creditor import Creditor
 
 LOGGER = structlog.get_logger(__name__)
 
 
-class UPC:
+class UPC(Creditor):
     """Provides access to UPC bills."""
 
-    NAME = "UPC"
     LOGIN_URL = "https://my.upc.ro/myupc-web/appmanager/portal"
     INVOICES_URL = "https://my.upc.ro/myupc-web/appmanager/portal/home?_nfpb=true&_st=&_pageLabel=BillDefaultPage_v2#facturi"
     SELECTORS = {
@@ -45,6 +45,8 @@ class UPC:
     def __init__(self, email: str, password: str) -> None:
         """Initializes a new instance of :see:UPC."""
 
+        super().__init__("UPC")
+
         self._email = email
         self._password = password
 
@@ -53,7 +55,7 @@ class UPC:
 
         LOGGER.info("Getting latest invoice from UPC")
 
-        browser = selenium.create_browser(self.NAME)
+        browser = self.browser_manager.create_browser()
         browser.get(self.INVOICES_URL)
 
         try:
@@ -93,12 +95,10 @@ class UPC:
         invoice_payment_status = invoice_payment_status_elem.text
         invoice_amount = invoice_amount_elem.text
 
-        print("'%s'" % invoice_amount.replace(" LEI", ""))
-
-        browser.close()
+        self.browser_manager.destroy_browser()
 
         invoice = Invoice(
-            self.NAME,
+            self.name,
             float(invoice_amount.replace(" LEI", "")),
             datetime.strptime(invoice_date, "%d.%m.%Y"),
             datetime.strptime(invoice_due_date, "%d.%m.%Y"),
