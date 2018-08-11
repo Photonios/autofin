@@ -5,6 +5,8 @@ from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from autofin import selenium
 from autofin.billing import PaymentStatus, Invoice
@@ -21,6 +23,7 @@ class EON:
     SELECTORS = {
         "email_input": (By.CSS_SELECTOR, "#username"),
         "password_input": (By.CSS_SELECTOR, "#password"),
+        "lastest_invoice_row": (By.CSS_SELECTOR, "ul.invoices li.invoice:nth-child(2)"),
         "invoice_date": (
             By.CSS_SELECTOR,
             "ul.invoices li.invoice:nth-child(2) div.eon-table-heading",
@@ -65,6 +68,10 @@ class EON:
         LOGGER.debug("Navigating to invoices section for EON", url=self.INVOICES_URL)
 
         browser.get(self.INVOICES_URL)
+
+        WebDriverWait(browser, 10).until(
+            EC.presence_of_element_located(self.SELECTORS["lastest_invoice_row"])
+        )
 
         invoice_date_elem = browser.find_element(*self.SELECTORS["invoice_date"])
         invoice_due_date_elem = browser.find_element(

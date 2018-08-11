@@ -11,6 +11,7 @@ def create_browser():
     app wide settings related to the browser."""
 
     chrome_options = Options()
+    chrome_options.add_argument("--blink-settings=imagesEnabled=false")
     chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.add_argument("--start-maximized")
 

@@ -10,7 +10,7 @@ class MessageFormatter:
     @staticmethod
     def invoices(invoices: List[Invoice]) -> str:
         """Formats a message with a list of invoices."""
-        invoices = "\n".join([str(invoice) for invoice in invoices])
+        invoices = "\n\n".join([str(invoice) for invoice in invoices])
 
         message = "%s - Bills overview\n\n%s" % (settings.MESSAGE_HEADER, invoices)
         return message
