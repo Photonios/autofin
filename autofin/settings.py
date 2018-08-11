@@ -26,7 +26,8 @@ MESSAGE_HEADER = "Autofin"
 CREDITORS = {
     "electrica": environ.get(
         "ELECTRICA_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123"
-    ).split(":")
+    ).split(":"),
+    "eon": environ.get("EON_CREDENTIALS", "adela.suhani@gmail.com:k4MTLVCk").split(":"),
 }
 
 # Storage configuration

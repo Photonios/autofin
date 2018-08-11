@@ -12,36 +12,35 @@ from autofin.billing import PaymentStatus, Invoice
 LOGGER = structlog.get_logger(__name__)
 
 
-class Electrica:
-    """Provides access to Electrica bills."""
+class EON:
+    """Provides access to EON bills."""
 
-    NAME = "Electrica SRL"
-    LOGIN_URL = "https://myelectrica.ro/index.php?pagina=login"
-    INVOICES_URL = "https://myelectrica.ro/index.php?pagina=facturile-mele"
+    NAME = "E-on"
+    LOGIN_URL = "https://myline-eon.ro/login"
+    INVOICES_URL = "https://myline-eon.ro/facturile-mele"
     SELECTORS = {
-        "email_input": (By.CSS_SELECTOR, "#myelectrica_utilizator"),
-        "password_input": (By.CSS_SELECTOR, "#myelectrica_pass"),
-        "campaign_close_button": (By.CSS_SELECTOR, ".modal .modal-header .close"),
+        "email_input": (By.CSS_SELECTOR, "#username"),
+        "password_input": (By.CSS_SELECTOR, "#password"),
         "invoice_date": (
             By.CSS_SELECTOR,
-            "#datatable-facturi tbody tr:nth-child(1) td:nth-child(2)",
+            "ul.invoices li.invoice:nth-child(2) div.eon-table-heading",
         ),
         "invoice_due_date": (
             By.CSS_SELECTOR,
-            "#datatable-facturi tbody tr:nth-child(1) td:nth-child(3)",
+            "ul.invoices li.invoice:nth-child(2) div.eon-table-content div:nth-child(1)",
         ),
         "invoice_payment_status": (
             By.CSS_SELECTOR,
-            "#datatable-facturi tbody tr:nth-child(1) td:nth-child(5)",
+            "ul.invoices li.invoice:nth-child(2) div.eon-table-content div:nth-child(4)",
         ),
         "invoice_amount": (
             By.CSS_SELECTOR,
-            "#datatable-facturi tbody tr:nth-child(1) td:nth-child(6)",
+            "ul.invoices li.invoice:nth-child(2) div.eon-table-content div:nth-child(3)",
         ),
     }
 
     def __init__(self, email: str, password: str) -> None:
-        """Initializes a new instance of :see:Electrica."""
+        """Initializes a new instance of :see:EON."""
 
         self._email = email
         self._password = password
@@ -49,12 +48,12 @@ class Electrica:
     def get_latest_invoice(self) -> Invoice:
         """Gets the latest bill, paid or not paid."""
 
-        LOGGER.info("Getting latest invoice from Electrica")
+        LOGGER.info("Getting latest invoice from EON")
 
         browser = selenium.create_browser()
         browser.get(self.LOGIN_URL)
 
-        LOGGER.debug("Logging into Electrica", url=self.LOGIN_URL)
+        LOGGER.debug("Logging into EON", url=self.LOGIN_URL)
 
         email_input = browser.find_element(*self.SELECTORS["email_input"])
         password_input = browser.find_element(*self.SELECTORS["password_input"])
@@ -63,9 +62,7 @@ class Electrica:
         password_input.send_keys(self._password)
         password_input.send_keys(Keys.ENTER)
 
-        LOGGER.debug(
-            "Navigating to invoices section for Electrica", url=self.INVOICES_URL
-        )
+        LOGGER.debug("Navigating to invoices section for EON", url=self.INVOICES_URL)
 
         browser.get(self.INVOICES_URL)
 
@@ -78,20 +75,20 @@ class Electrica:
         )
         invoice_amount_elem = browser.find_element(*self.SELECTORS["invoice_amount"])
 
-        invoice_date = int(invoice_date_elem.get_attribute("data-order"))
-        invoice_due_date = int(invoice_due_date_elem.get_attribute("data-order"))
+        invoice_date = invoice_date_elem.text
+        invoice_due_date = invoice_due_date_elem.text
         invoice_payment_status = invoice_payment_status_elem.text
-        invoice_amount = float(invoice_amount_elem.text.replace(",", "."))
+        invoice_amount = invoice_amount_elem.text
 
         browser.close()
 
         invoice = Invoice(
             self.NAME,
-            invoice_amount,
-            datetime.fromtimestamp(invoice_date),
-            datetime.fromtimestamp(invoice_due_date),
+            float(invoice_amount.replace(",", ".")),
+            datetime.strptime(invoice_date, "%d.%m.%Y"),
+            datetime.strptime(invoice_due_date, "%d.%m.%Y"),
             PaymentStatus.PAID_CONFIRMED
-            if invoice_payment_status == "Incasata"
+            if invoice_payment_status == "0.00"
             else PaymentStatus.UNPAID,
         )
 
