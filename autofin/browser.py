@@ -27,7 +27,9 @@ class BrowserManager:
         """
 
         self.session_name = session_name
-        self.cleaned_session_name = self.session_name.replace(" ", "").lower()
+        self.cleaned_session_name = (
+            self.session_name.replace(" ", "").replace("-", "").lower()
+        )
 
         self.profile_path = os.path.join(
             settings.SELENIUM_CHROME_PROFILE_PATH, self.cleaned_session_name
