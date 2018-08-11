@@ -5,6 +5,8 @@ from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from autofin import selenium
 from autofin.billing import PaymentStatus, Invoice
@@ -21,7 +23,7 @@ class Electrica:
     SELECTORS = {
         "email_input": (By.CSS_SELECTOR, "#myelectrica_utilizator"),
         "password_input": (By.CSS_SELECTOR, "#myelectrica_pass"),
-        "campaign_close_button": (By.CSS_SELECTOR, ".modal .modal-header .close"),
+        "current_user": (By.CSS_SELECTOR, ".profile-info"),
         "invoice_date": (
             By.CSS_SELECTOR,
             "#datatable-facturi tbody tr:nth-child(1) td:nth-child(2)",
@@ -51,23 +53,31 @@ class Electrica:
 
         LOGGER.info("Getting latest invoice from Electrica")
 
-        browser = selenium.create_browser()
-        browser.get(self.LOGIN_URL)
-
-        LOGGER.debug("Logging into Electrica", url=self.LOGIN_URL)
-
-        email_input = browser.find_element(*self.SELECTORS["email_input"])
-        password_input = browser.find_element(*self.SELECTORS["password_input"])
-
-        email_input.send_keys(self._email)
-        password_input.send_keys(self._password)
-        password_input.send_keys(Keys.ENTER)
-
-        LOGGER.debug(
-            "Navigating to invoices section for Electrica", url=self.INVOICES_URL
-        )
-
+        browser = selenium.create_browser("electrica")
         browser.get(self.INVOICES_URL)
+
+        try:
+            WebDriverWait(browser, 2).until(
+                EC.presence_of_element_located(self.SELECTORS["current_user"])
+            )
+
+            LOGGER.debug("Already logged into Electrica, skipping login")
+        except Exception:
+            LOGGER.debug("Logging into Electrica", url=self.LOGIN_URL)
+            browser.get(self.LOGIN_URL)
+
+            email_input = browser.find_element(*self.SELECTORS["email_input"])
+            password_input = browser.find_element(*self.SELECTORS["password_input"])
+
+            email_input.send_keys(self._email)
+            password_input.send_keys(self._password)
+            password_input.send_keys(Keys.ENTER)
+
+            LOGGER.debug(
+                "Navigating to invoices section for Electrica", url=self.INVOICES_URL
+            )
+
+            browser.get(self.INVOICES_URL)
 
         invoice_date_elem = browser.find_element(*self.SELECTORS["invoice_date"])
         invoice_due_date_elem = browser.find_element(

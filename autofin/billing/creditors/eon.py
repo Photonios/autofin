@@ -23,6 +23,7 @@ class EON:
     SELECTORS = {
         "email_input": (By.CSS_SELECTOR, "#username"),
         "password_input": (By.CSS_SELECTOR, "#password"),
+        "sidebar": (By.CSS_SELECTOR, ".eon-sidebar"),
         "lastest_invoice_row": (By.CSS_SELECTOR, "ul.invoices li.invoice:nth-child(2)"),
         "invoice_date": (
             By.CSS_SELECTOR,
@@ -53,21 +54,32 @@ class EON:
 
         LOGGER.info("Getting latest invoice from EON")
 
-        browser = selenium.create_browser()
-        browser.get(self.LOGIN_URL)
-
-        LOGGER.debug("Logging into EON", url=self.LOGIN_URL)
-
-        email_input = browser.find_element(*self.SELECTORS["email_input"])
-        password_input = browser.find_element(*self.SELECTORS["password_input"])
-
-        email_input.send_keys(self._email)
-        password_input.send_keys(self._password)
-        password_input.send_keys(Keys.ENTER)
-
-        LOGGER.debug("Navigating to invoices section for EON", url=self.INVOICES_URL)
-
+        browser = selenium.create_browser("eon")
         browser.get(self.INVOICES_URL)
+
+        try:
+            WebDriverWait(browser, 2).until(
+                EC.presence_of_element_located(self.SELECTORS["sidebar"])
+            )
+
+            LOGGER.debug("Already logged into EON, skipping login")
+        except Exception:
+
+            LOGGER.debug("Logging into EON", url=self.LOGIN_URL)
+
+            browser.get(self.LOGIN_URL)
+
+            email_input = browser.find_element(*self.SELECTORS["email_input"])
+            password_input = browser.find_element(*self.SELECTORS["password_input"])
+
+            email_input.send_keys(self._email)
+            password_input.send_keys(self._password)
+            password_input.send_keys(Keys.ENTER)
+
+            LOGGER.debug(
+                "Navigating to invoices section for EON", url=self.INVOICES_URL
+            )
+            browser.get(self.INVOICES_URL)
 
         WebDriverWait(browser, 10).until(
             EC.presence_of_element_located(self.SELECTORS["lastest_invoice_row"])
@@ -99,5 +111,5 @@ class EON:
             else PaymentStatus.UNPAID,
         )
 
-        LOGGER.info("Found latest Electria invoice", invoice=invoice)
+        LOGGER.info("Found latest EON invoice", invoice=invoice)
         return invoice
