@@ -2,6 +2,7 @@ from autofin import settings
 from autofin.util import GlorifiedEnum
 
 from .eon import EON
+from .upc import UPC
 from .electrica import Electrica
 
 
@@ -14,7 +15,11 @@ class CreditorName(GlorifiedEnum):
     ELECTRICA = "electrica"
 
 
-creditors_class_map = {CreditorName.EON: EON, CreditorName.ELECTRICA: Electrica}
+creditors_class_map = {
+    CreditorName.EON: EON,
+    CreditorName.UPC: UPC,
+    CreditorName.ELECTRICA: Electrica,
+}
 
 creditors = {
     name: creditors_class_map[name](*credentials)

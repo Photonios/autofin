@@ -28,6 +28,9 @@ CREDITORS = {
         "ELECTRICA_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123"
     ).split(":"),
     "eon": environ.get("EON_CREDENTIALS", "adela.suhani@gmail.com:k4MTLVCk").split(":"),
+    "upc": environ.get("UPC_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123").split(
+        ":"
+    ),
 }
 
 # Storage configuration

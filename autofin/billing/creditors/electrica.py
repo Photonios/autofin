@@ -53,7 +53,7 @@ class Electrica:
 
         LOGGER.info("Getting latest invoice from Electrica")
 
-        browser = selenium.create_browser("electrica")
+        browser = selenium.create_browser(self.NAME)
         browser.get(self.INVOICES_URL)
 
         try:
