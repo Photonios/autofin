@@ -10,13 +10,9 @@ dot_file = os.path.join(root_dir, "local.env")
 load_dotenv(dotenv_path=dot_file)
 
 # Twillio configuration
-TWILLIO_ACCOUNT_SID = environ.get(
-    "TWILLIO_ACCOUNT_SID", "AC5d751b71f3e7e5a980ccd386286fc2c7"
-)
-TWILLIO_AUTH_TOKEN = environ.get(
-    "TWILLIO_AUTH_TOKEN", "26290cba2e5e882cf8cdf9397d514f0d"
-)
-TWILLIO_PHONE_NUMBER = environ.get("TWILLIO_PHONE_NUMBER", "+3197014200803")
+TWILLIO_ACCOUNT_SID = environ.get("TWILLIO_ACCOUNT_SID", None)
+TWILLIO_AUTH_TOKEN = environ.get("TWILLIO_AUTH_TOKEN", None)
+TWILLIO_PHONE_NUMBER = environ.get("TWILLIO_PHONE_NUMBER", None)
 TWILLIO_WEBHOOK_SERVER_PORT = int(environ.get("TWILLIO_WEBHOOK_SERVER_PORT", "32500"))
 
 # Message configuration
@@ -24,16 +20,10 @@ MESSAGE_HEADER = "Autofin"
 
 # Creditor configuration
 CREDITORS = {
-    "eon": environ.get("EON_CREDENTIALS", "adela.suhani@gmail.com:k4MTLVCk").split(":"),
-    "upc": environ.get("UPC_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123").split(
-        ":"
-    ),
-    "digi": environ.get(
-        "DIGI_CREDENTIALS", "adela.suhani@gmail.com:43f0129311D54d92"
-    ).split(":"),
-    "electrica": environ.get(
-        "ELECTRICA_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123"
-    ).split(":"),
+    "eon": environ.get("EON_CREDENTIALS", "").split(":"),
+    "upc": environ.get("UPC_CREDENTIALS", "").split(":"),
+    "digi": environ.get("DIGI_CREDENTIALS", "").split(":"),
+    "electrica": environ.get("ELECTRICA_CREDENTIALS", "").split(":"),
 }
 
 # Storage configuration
