@@ -1,6 +1,3 @@
-from autofin.browser import BrowserManager
-
-
 class Creditor:
     """Base class for creditors."""
 
@@ -9,4 +6,19 @@ class Creditor:
         the specified name."""
 
         self.name = name
-        self.browser_manager = BrowserManager(self.name)
+
+        class Error(RuntimeError):
+            """Error that is raised by :see:Creditor implementations."""
+
+            def __init__(_, message: str) -> None:
+                super().__init__("%s: %s" % (self.name, message))
+
+        class AuthError(Error):
+            """Error that is raised when authentication failed
+            for a creditor."""
+
+            def __init__(_) -> None:
+                super().__init__("Authentication failed")
+
+        self.Error = Error
+        self.AuthError = AuthError

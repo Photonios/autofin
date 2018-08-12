@@ -1,13 +1,9 @@
+import bs4
 import structlog
 
 from datetime import datetime
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
+from autofin import http, html
 from autofin.billing import PaymentStatus, Invoice
 
 from .creditor import Creditor
@@ -18,31 +14,6 @@ LOGGER = structlog.get_logger(__name__)
 class EON(Creditor):
     """Provides access to EON bills."""
 
-    LOGIN_URL = "https://myline-eon.ro/login"
-    INVOICES_URL = "https://myline-eon.ro/facturile-mele"
-    SELECTORS = {
-        "email_input": (By.CSS_SELECTOR, "#username"),
-        "password_input": (By.CSS_SELECTOR, "#password"),
-        "sidebar": (By.CSS_SELECTOR, ".eon-sidebar"),
-        "lastest_invoice_row": (By.CSS_SELECTOR, "ul.invoices li.invoice:nth-child(2)"),
-        "invoice_date": (
-            By.CSS_SELECTOR,
-            "ul.invoices li.invoice:nth-child(2) div.eon-table-heading",
-        ),
-        "invoice_due_date": (
-            By.CSS_SELECTOR,
-            "ul.invoices li.invoice:nth-child(2) div.eon-table-content div:nth-child(1)",
-        ),
-        "invoice_payment_status": (
-            By.CSS_SELECTOR,
-            "ul.invoices li.invoice:nth-child(2) div.eon-table-content div:nth-child(4)",
-        ),
-        "invoice_amount": (
-            By.CSS_SELECTOR,
-            "ul.invoices li.invoice:nth-child(2) div.eon-table-content div:nth-child(3)",
-        ),
-    }
-
     def __init__(self, email: str, password: str) -> None:
         """Initializes a new instance of :see:EON."""
 
@@ -51,56 +22,73 @@ class EON(Creditor):
         self._email = email
         self._password = password
 
+        self._login_page_url = "https://myline-eon.ro/login"
+        self._login_url = "https://myline-eon.ro/login-check"
+        self._invoices_url = "https://myline-eon.ro/facturile-mele"
+
+        self._selectors = html.CSSSelectorCollection(
+            sidebar="#sidebar",
+            invoice_date="ul.invoices li:nth-of-type(2) div.eon-table-heading",
+            invoice_due_date="ul.invoices li:nth-of-type(2) div.eon-table-content div:nth-of-type(1)",
+            invoice_payment_status="ul.invoices li:nth-of-type(2) div.eon-table-content div:nth-of-type(4)",
+            invoice_amount="ul.invoices li:nth-of-type(2) div.eon-table-content div:nth-of-type(3)",
+        )
+
     def get_latest_invoice(self) -> Invoice:
         """Gets the latest bill, paid or not paid."""
 
         LOGGER.info("Getting latest invoice from EON")
 
-        browser = self.browser_manager.create_browser()
-        browser.get(self.INVOICES_URL)
+        session = http.create_session()
 
-        try:
-            WebDriverWait(browser, 2).until(
-                EC.presence_of_element_located(self.SELECTORS["sidebar"])
-            )
+        response = session.get(self._login_page_url)
+        if response.status_code != 200:
+            raise self.Error("Login page is not functioning")
 
-            LOGGER.debug("Already logged into EON, skipping login")
-        except Exception:
-            LOGGER.debug("Logging into EON", url=self.LOGIN_URL)
+        soup = bs4.BeautifulSoup(response.content, "html.parser")
+        csrf_token_elem = soup.find("input", {"name": "_csrf_token"})
+        if not csrf_token_elem:
+            raise self.Error("Could not extract CSRF token")
 
-            browser.get(self.LOGIN_URL)
+        login_data = {
+            "_username": self._email,
+            "_password": self._password,
+            "_csrf_token": csrf_token_elem.get("value"),
+        }
 
-            email_input = browser.find_element(*self.SELECTORS["email_input"])
-            password_input = browser.find_element(*self.SELECTORS["password_input"])
+        if session.post(self._login_url, login_data).status_code != 200:
+            raise self.AuthError()
 
-            email_input.send_keys(self._email)
-            password_input.send_keys(self._password)
-            password_input.send_keys(Keys.ENTER)
+        response = session.get(self._invoices_url)
+        soup = bs4.BeautifulSoup(response.content, "html.parser")
 
-            LOGGER.debug(
-                "Navigating to invoices section for EON", url=self.INVOICES_URL
-            )
-            browser.get(self.INVOICES_URL)
+        if not soup.select_one(self._selectors.sidebar):
+            raise self.AuthError()
 
-        WebDriverWait(browser, 10).until(
-            EC.presence_of_element_located(self.SELECTORS["lastest_invoice_row"])
+        invoice_date_elem = soup.select_one(self._selectors.invoice_date)
+        if not invoice_date_elem:
+            raise self.Error("Failed to get invoice date")
+
+        invoice_due_date_elem = soup.select_one(self._selectors.invoice_due_date)
+        if not invoice_due_date_elem:
+            raise self.Error("Failed to get invoice due date")
+
+        invoice_payment_status_elem = soup.select_one(
+            self._selectors.invoice_payment_status
         )
+        if not invoice_payment_status_elem:
+            raise self.Error("Failed to get invoice payment status")
 
-        invoice_date_elem = browser.find_element(*self.SELECTORS["invoice_date"])
-        invoice_due_date_elem = browser.find_element(
-            *self.SELECTORS["invoice_due_date"]
-        )
-        invoice_payment_status_elem = browser.find_element(
-            *self.SELECTORS["invoice_payment_status"]
-        )
-        invoice_amount_elem = browser.find_element(*self.SELECTORS["invoice_amount"])
+        invoice_amount_elem = soup.select_one(self._selectors.invoice_amount)
+        if not invoice_amount_elem:
+            raise self.Error("Failed to get invoice amount")
 
-        invoice_date = invoice_date_elem.text
-        invoice_due_date = invoice_due_date_elem.text
-        invoice_payment_status = invoice_payment_status_elem.text
-        invoice_amount = invoice_amount_elem.text
+        invoice_date = invoice_date_elem.contents[-1]
+        invoice_due_date = invoice_due_date_elem.contents[-1]
+        invoice_payment_status = invoice_payment_status_elem.contents[-1]
+        invoice_amount = invoice_amount_elem.contents[-1]
 
-        self.browser_manager.destroy_browser()
+        print(invoice_date, invoice_due_date, invoice_payment_status, invoice_amount)
 
         invoice = Invoice(
             self.name,

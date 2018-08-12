@@ -1,13 +1,9 @@
+import bs4
 import structlog
 
 from datetime import datetime
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
+from autofin import http, html
 from autofin.billing import PaymentStatus, Invoice
 
 from .creditor import Creditor
@@ -18,30 +14,6 @@ LOGGER = structlog.get_logger(__name__)
 class UPC(Creditor):
     """Provides access to UPC bills."""
 
-    LOGIN_URL = "https://my.upc.ro/myupc-web/appmanager/portal"
-    INVOICES_URL = "https://my.upc.ro/myupc-web/appmanager/portal/home?_nfpb=true&_st=&_pageLabel=BillDefaultPage_v2#facturi"
-    SELECTORS = {
-        "email_input": (By.CSS_SELECTOR, "#inputEmail"),
-        "password_input": (By.CSS_SELECTOR, "#password"),
-        "current_user": (By.CSS_SELECTOR, ".navbar-account"),
-        "invoice_date": (
-            By.CSS_SELECTOR,
-            "#facturi tr:nth-child(1) td:nth-child(3) p.invoices-table__value",
-        ),
-        "invoice_due_date": (
-            By.CSS_SELECTOR,
-            "#facturi tr:nth-child(1) td:nth-child(4) p.invoices-table__value",
-        ),
-        "invoice_payment_status": (
-            By.CSS_SELECTOR,
-            "#facturi tr:nth-child(1) td:nth-child(5) p.invoices-table__value",
-        ),
-        "invoice_amount": (
-            By.CSS_SELECTOR,
-            "#facturi tr:nth-child(1) td:nth-child(6) p.invoices-table__value",
-        ),
-    }
-
     def __init__(self, email: str, password: str) -> None:
         """Initializes a new instance of :see:UPC."""
 
@@ -50,52 +22,71 @@ class UPC(Creditor):
         self._email = email
         self._password = password
 
+        self._selectors = html.CSSSelectorCollection(
+            current_user=".navbar-account",
+            invoice_date="#facturi tr:nth-of-type(1) td:nth-of-type(3) p.invoices-table__value",
+            invoice_due_date="#facturi tr:nth-of-type(1) td:nth-of-type(4) p.invoices-table__value",
+            invoice_payment_status="#facturi tr:nth-of-type(1) td:nth-of-type(5) p.invoices-table__value",
+            invoice_amount="#facturi tr:nth-of-type(1) td:nth-of-type(6) p.invoices-table__value",
+        )
+
+        self._login_page_url = "https://my.upc.ro/myupc-web/appmanager/portal"
+        self._login_url = "https://my.upc.ro/myupc-web/appmanager/portal/guest?_nfpb=true&_st=&_windowLabel=login_v2_portlet&_urlType=action&wlplogin_v2_portlet_action=submitForm"
+        self._invoices_url = "https://my.upc.ro/myupc-web/appmanager/portal/home?_nfpb=true&_st=&_pageLabel=BillDefaultPage_v2#facturi"
+
     def get_latest_invoice(self) -> Invoice:
         """Gets the latest bill, paid or not paid."""
 
         LOGGER.info("Getting latest invoice from UPC")
 
-        browser = self.browser_manager.create_browser()
-        browser.get(self.INVOICES_URL)
+        session = http.create_session()
 
-        try:
-            WebDriverWait(browser, 2).until(
-                EC.presence_of_element_located(self.SELECTORS["current_user"])
-            )
+        response = session.get(self._login_page_url)
+        if response.status_code != 200:
+            raise self.Error("Login page is not functioning")
 
-            LOGGER.debug("Already logged into UPC, skipping login")
-        except Exception:
-            LOGGER.debug("Logging into UPC", url=self.LOGIN_URL)
+        soup = bs4.BeautifulSoup(response.content, "html.parser")
+        csrf_token_elem = soup.find("input", {"name": "csrfToken"})
+        if not csrf_token_elem:
+            raise self.Error("Could not extract CSRF token")
 
-            browser.get(self.LOGIN_URL)
+        login_data = {
+            "inputEmail": self._email,
+            "password": self._password,
+            "csrfToken": csrf_token_elem.get("value"),
+            "errorsinput": "",
+        }
 
-            email_input = browser.find_element(*self.SELECTORS["email_input"])
-            password_input = browser.find_element(*self.SELECTORS["password_input"])
+        response = session.post(self._login_url, login_data)
+        soup = bs4.BeautifulSoup(response.content, "html.parser")
+        if not soup.select_one(self._selectors.current_user):
+            raise self.AuthError()
 
-            email_input.send_keys(self._email)
-            password_input.send_keys(self._password)
-            password_input.send_keys(Keys.ENTER)
+        response = session.get(self._invoices_url)
+        soup = bs4.BeautifulSoup(response.content, "html.parser")
 
-            LOGGER.debug(
-                "Navigating to invoices section for UPC", url=self.INVOICES_URL
-            )
-            browser.get(self.INVOICES_URL)
+        invoice_date_elem = soup.select_one(self._selectors.invoice_date)
+        if not invoice_date_elem:
+            raise self.Error("Failed to get invoice date")
 
-        invoice_date_elem = browser.find_element(*self.SELECTORS["invoice_date"])
-        invoice_due_date_elem = browser.find_element(
-            *self.SELECTORS["invoice_due_date"]
+        invoice_due_date_elem = soup.select_one(self._selectors.invoice_due_date)
+        if not invoice_due_date_elem:
+            raise self.Error("Failed to get invoice due date")
+
+        invoice_payment_status_elem = soup.select_one(
+            self._selectors.invoice_payment_status
         )
-        invoice_payment_status_elem = browser.find_element(
-            *self.SELECTORS["invoice_payment_status"]
-        )
-        invoice_amount_elem = browser.find_element(*self.SELECTORS["invoice_amount"])
+        if not invoice_payment_status_elem:
+            raise self.Error("Failed to get invoice payment status")
 
-        invoice_date = invoice_date_elem.text
-        invoice_due_date = invoice_due_date_elem.text
-        invoice_payment_status = invoice_payment_status_elem.text
-        invoice_amount = invoice_amount_elem.text
+        invoice_amount_elem = soup.select_one(self._selectors.invoice_amount)
+        if not invoice_amount_elem:
+            raise self.Error("Failed to get invoice amount")
 
-        self.browser_manager.destroy_browser()
+        invoice_date = invoice_date_elem.text.strip()
+        invoice_due_date = invoice_due_date_elem.text.strip()
+        invoice_payment_status = invoice_payment_status_elem.text.strip()
+        invoice_amount = invoice_amount_elem.text.strip()
 
         invoice = Invoice(
             self.name,
