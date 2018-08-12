@@ -24,13 +24,16 @@ MESSAGE_HEADER = "Autofin"
 
 # Creditor configuration
 CREDITORS = {
-    "electrica": environ.get(
-        "ELECTRICA_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123"
-    ).split(":"),
     "eon": environ.get("EON_CREDENTIALS", "adela.suhani@gmail.com:k4MTLVCk").split(":"),
     "upc": environ.get("UPC_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123").split(
         ":"
     ),
+    "digi": environ.get(
+        "DIGI_CREDENTIALS", "adela.suhani@gmail.com:43f0129311D54d92"
+    ).split(":"),
+    "electrica": environ.get(
+        "ELECTRICA_CREDENTIALS", "adela.suhani@gmail.com:aoeuid123"
+    ).split(":"),
 }
 
 # Storage configuration

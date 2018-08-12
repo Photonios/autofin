@@ -88,8 +88,6 @@ class EON(Creditor):
         invoice_payment_status = invoice_payment_status_elem.contents[-1]
         invoice_amount = invoice_amount_elem.contents[-1]
 
-        print(invoice_date, invoice_due_date, invoice_payment_status, invoice_amount)
-
         invoice = Invoice(
             self.name,
             float(invoice_amount.replace(",", ".")),

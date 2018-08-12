@@ -3,6 +3,7 @@ from autofin.util import GlorifiedEnum
 
 from .eon import EON
 from .upc import UPC
+from .digi import Digi
 from .electrica import Electrica
 
 
@@ -11,13 +12,14 @@ class CreditorName(GlorifiedEnum):
 
     EON = "eon"
     UPC = "upc"
-    RDS = "rds"
+    DIGI = "digi"
     ELECTRICA = "electrica"
 
 
 creditors_class_map = {
     CreditorName.EON: EON,
     CreditorName.UPC: UPC,
+    CreditorName.DIGI: Digi,
     CreditorName.ELECTRICA: Electrica,
 }
 
