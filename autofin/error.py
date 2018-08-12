@@ -1,3 +1,5 @@
+import sys
+import traceback
 import structlog
 
 from raven import Client
@@ -24,6 +26,7 @@ def capture_error() -> str:
     if __raven__:
         return __raven__.captureException()
 
+    traceback.print_exc()
     return "LOCAL_ERROR"
 
 
