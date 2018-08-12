@@ -5,23 +5,36 @@ import distutils.cmd
 from setuptools import find_packages, setup
 
 
+class BaseCommand(distutils.cmd.Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+
 def create_command(text, cmd):
     """Creates a custom setup.py command."""
 
-    class CustomCommand(distutils.cmd.Command):
+    class CustomCommand(BaseCommand):
         description = text
-        user_options = []
-
-        def initialize_options(self):
-            pass
-
-        def finalize_options(self):
-            pass
 
         def run(self):
             subprocess.check_call(cmd)
 
     return CustomCommand
+
+
+class MigrateCommand(BaseCommand):
+    description = "Migrates the database"
+
+    def run(self):
+        from autofin import models
+        from autofin.db import database
+
+        database.create_tables([models.User, models.PhoneNumber, models.Creditor])
 
 
 with open(
@@ -52,6 +65,7 @@ setup(
         "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     ],
     cmdclass={
-        "format": create_command("Formats the code", ["black", "autofin", "setup.py"])
+        "format": create_command("Formats the code", ["black", "autofin", "setup.py"]),
+        "migrate": MigrateCommand,
     },
 )

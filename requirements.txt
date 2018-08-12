@@ -6,3 +6,5 @@ requests==2.19.1
 python-dotenv==0.9.1
 raven==6.9.0
 beautifulsoup4==4.6.1
+alembic==1.0.0
+SQLAlchemy==1.2.10
