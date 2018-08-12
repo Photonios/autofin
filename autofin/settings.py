@@ -9,6 +9,9 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 dot_file = os.path.join(root_dir, "local.env")
 load_dotenv(dotenv_path=dot_file)
 
+# General configuration
+SECRET_KEY = environ.get("SECRET_KEY", "supersecretkey")
+
 # Twillio configuration
 TWILLIO_ACCOUNT_SID = environ.get("TWILLIO_ACCOUNT_SID", None)
 TWILLIO_AUTH_TOKEN = environ.get("TWILLIO_AUTH_TOKEN", None)
