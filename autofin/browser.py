@@ -70,7 +70,7 @@ class BrowserManager:
 
         cookies_db = sqlite3.connect(cookies_db_path)
         cookies_db.execute(
-            "update cookies set expires_utc = 41023584000000000, has_expires = 1, is_persistent = 1 where expires_utc = 0"
+            "update cookies set expires_utc = 41023584000000000, has_expires = 1, is_persistent = 1"
         )
         cookies_db.commit()
         cookies_db.close()
