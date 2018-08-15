@@ -39,13 +39,15 @@ class MigrateCommand(BaseCommand):
             [
                 models.Creditor,
                 models.User,
+                models.Invoice,
                 models.UserCreditorConfig,
                 models.UserContactMethod,
             ]
         )
 
-        for name, id in CreditorID.choices():
-            models.Creditor.replace(id=id, name=name).execute()
+        for creditor_id in CreditorID.all():
+            name = CreditorID.human_readable(creditor_id)
+            models.Creditor.replace(id=creditor_id, name=name).execute()
 
 
 with open(

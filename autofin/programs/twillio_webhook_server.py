@@ -6,7 +6,7 @@ from urllib.parse import unquote
 from autofin import settings, models
 from autofin.contact import ContactMethod
 from autofin.error import capture_error, capture_error_context
-from autofin.billing import InvoiceManager
+from autofin.billing import InvoiceRetriever
 from autofin.contact import MessageFormatter
 
 LOGGER = structlog.get_logger(__name__)
@@ -57,7 +57,7 @@ async def on_sms_received(request):
             logger.error("Receive unknown command through SMS", command=command)
             return web.Response(text=MessageFormatter.unknown_command(command))
 
-        invoices = InvoiceManager(user).get_latest_invoices()
+        invoices = InvoiceRetriever(user).get_latest_invoices()
         message = MessageFormatter.invoices(invoices)
 
         logger.info("Send a message back", message=message)

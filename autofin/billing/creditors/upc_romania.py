@@ -4,20 +4,19 @@ import structlog
 from datetime import datetime
 
 from autofin import http, html
-from autofin.billing import PaymentStatus, Invoice
+from autofin.billing import Currency, PaymentStatus
 
 from .creditor_impl import CreditorImpl
+from .creditor_invoice import CreditorInvoice
 
 LOGGER = structlog.get_logger(__name__)
 
 
-class UPC(CreditorImpl):
-    """Provides access to UPC bills."""
+class UPCRomania(CreditorImpl):
+    """Provides access to UPC Romania bills."""
 
     def __init__(self, email: str, password: str) -> None:
-        """Initializes a new instance of :see:UPC."""
-
-        super().__init__("UPC")
+        """Initializes a new instance of :see:UPCRomania."""
 
         self._email = email
         self._password = password
@@ -34,10 +33,10 @@ class UPC(CreditorImpl):
         self._login_url = "https://my.upc.ro/myupc-web/appmanager/portal/guest?_nfpb=true&_st=&_windowLabel=login_v2_portlet&_urlType=action&wlplogin_v2_portlet_action=submitForm"
         self._invoices_url = "https://my.upc.ro/myupc-web/appmanager/portal/home?_nfpb=true&_st=&_pageLabel=BillDefaultPage_v2#facturi"
 
-    def get_latest_invoice(self) -> Invoice:
+    def get_latest_invoice(self) -> CreditorInvoice:
         """Gets the latest bill, paid or not paid."""
 
-        LOGGER.info("Getting latest invoice from UPC")
+        LOGGER.info("Getting latest invoice from UPC Romania")
 
         session = http.create_session()
 
@@ -88,9 +87,9 @@ class UPC(CreditorImpl):
         invoice_payment_status = invoice_payment_status_elem.text.strip()
         invoice_amount = invoice_amount_elem.text.strip()
 
-        invoice = Invoice(
-            self.name,
+        invoice = CreditorInvoice(
             float(invoice_amount.replace(" LEI", "")),
+            Currency.RON,
             datetime.strptime(invoice_date, "%d.%m.%Y"),
             datetime.strptime(invoice_due_date, "%d.%m.%Y"),
             PaymentStatus.PAID_CONFIRMED
@@ -98,5 +97,5 @@ class UPC(CreditorImpl):
             else PaymentStatus.UNPAID,
         )
 
-        LOGGER.info("Found latest UPC invoice", invoice=invoice)
+        LOGGER.info("Found latest UPC Romania invoice", invoice=invoice)
         return invoice

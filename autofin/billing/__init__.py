@@ -1,3 +1,3 @@
-from .invoice import Invoice
+from .currency import Currency
 from .payment_status import PaymentStatus
-from .invoice_manager import InvoiceManager
+from .invoice_retriever import InvoiceRetriever

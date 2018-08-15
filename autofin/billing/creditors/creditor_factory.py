@@ -1,19 +1,19 @@
 from typing import Tuple
 
-from .eon import EON
-from .upc import UPC
-from .digi import Digi
-from .electrica import Electrica
-from .creditor_impl import CreditorImpl
 from .creditor_id import CreditorID
+from .creditor_impl import CreditorImpl
+from .eon_romania import EONRomania
+from .upc_romania import UPCRomania
+from .digi_romania import DigiRomania
+from .electrica_romania import ElectricaRomania
 
 
 class CreditorFactory:
     _map = {
-        CreditorID.EON: EON,
-        CreditorID.UPC: UPC,
-        CreditorID.DIGI: Digi,
-        CreditorID.ELECTRICA: Electrica,
+        CreditorID.EON_ROMANIA: EONRomania,
+        CreditorID.UPC_ROMANIA: UPCRomania,
+        CreditorID.DIGI_ROMANIA: DigiRomania,
+        CreditorID.ELECTRICA_ROMANIA: ElectricaRomania,
     }
 
     @classmethod

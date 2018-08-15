@@ -4,20 +4,19 @@ import structlog
 from datetime import datetime
 
 from autofin import http, html
-from autofin.billing import PaymentStatus, Invoice
+from autofin.billing import Currency, PaymentStatus
 
 from .creditor_impl import CreditorImpl
+from .creditor_invoice import CreditorInvoice
 
 LOGGER = structlog.get_logger(__name__)
 
 
-class Electrica(CreditorImpl):
-    """Provides access to Electrica bills."""
+class ElectricaRomania(CreditorImpl):
+    """Provides access to Electrica Romania bills."""
 
     def __init__(self, email: str, password: str) -> None:
-        """Initializes a new instance of :see:Electrica."""
-
-        super().__init__("Electrica SRL")
+        """Initializes a new instance of :see:ElectricaRomania."""
 
         self._email = email
         self._password = password
@@ -35,10 +34,10 @@ class Electrica(CreditorImpl):
             invoice_amount="#datatable-facturi tbody tr:nth-of-type(1) td:nth-of-type(6)",
         )
 
-    def get_latest_invoice(self) -> Invoice:
+    def get_latest_invoice(self) -> CreditorInvoice:
         """Gets the latest bill, paid or not paid."""
 
-        LOGGER.info("Getting latest invoice from Electrica")
+        LOGGER.info("Getting latest invoice from Electrica Romania")
 
         session = http.create_session()
 
@@ -82,9 +81,9 @@ class Electrica(CreditorImpl):
         invoice_payment_status = invoice_payment_status_elem.text
         invoice_amount = float(invoice_amount_elem.text.replace(",", "."))
 
-        invoice = Invoice(
-            self.name,
+        invoice = CreditorInvoice(
             invoice_amount,
+            Currency.RON,
             datetime.fromtimestamp(invoice_date),
             datetime.fromtimestamp(invoice_due_date),
             PaymentStatus.PAID_CONFIRMED
@@ -92,5 +91,5 @@ class Electrica(CreditorImpl):
             else PaymentStatus.UNPAID,
         )
 
-        LOGGER.info("Found latest Electria invoice", invoice=invoice)
+        LOGGER.info("Found latest Electria Romania invoice", invoice=invoice)
         return invoice

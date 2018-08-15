@@ -4,20 +4,19 @@ import structlog
 from datetime import datetime
 
 from autofin import http, html
-from autofin.billing import PaymentStatus, Invoice
+from autofin.billing import Currency, PaymentStatus
 
 from .creditor_impl import CreditorImpl
+from .creditor_invoice import CreditorInvoice
 
 LOGGER = structlog.get_logger(__name__)
 
 
-class Digi(CreditorImpl):
-    """Provides access to Digi bills."""
+class DigiRomania(CreditorImpl):
+    """Provides access to Digi Romania bills."""
 
     def __init__(self, email: str, password: str) -> None:
-        """Initializes a new instance of :see:Digi."""
-
-        super().__init__("Digi")
+        """Initializes a new instance of :see:DigiRomania."""
 
         self._email = email
         self._password = password
@@ -36,10 +35,10 @@ class Digi(CreditorImpl):
             invoice_payment_status=".remaining",
         )
 
-    def get_latest_invoice(self) -> Invoice:
+    def get_latest_invoice(self) -> CreditorInvoice:
         """Gets the latest bill, paid or not paid."""
 
-        LOGGER.info("Getting latest invoice from Digi")
+        LOGGER.info("Getting latest invoice from Digi Romania")
 
         session = http.create_session()
 
@@ -94,11 +93,11 @@ class Digi(CreditorImpl):
         invoice_payment_status = invoice_payment_status_elem.text.strip()
         invoice_amount = invoice_amount_elem.text.strip()
 
-        invoice = Invoice(
-            self.name,
+        invoice = CreditorInvoice(
             float(
                 invoice_amount.replace(" lei", ".").replace("&period", ".").rstrip(".")
             ),
+            Currency.RON,
             datetime.strptime(invoice_date, "%d-%m-%Y"),
             datetime.strptime(invoice_due_date, "%d-%m-%Y"),
             PaymentStatus.PAID_CONFIRMED
@@ -106,5 +105,5 @@ class Digi(CreditorImpl):
             else PaymentStatus.UNPAID,
         )
 
-        LOGGER.info("Found latest Digi invoice", invoice=invoice)
+        LOGGER.info("Found latest Digi Romania invoice", invoice=invoice)
         return invoice

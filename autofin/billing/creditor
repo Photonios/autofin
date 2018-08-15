@@ -1,0 +1,40 @@
+from datetime import datetime
+
+from .payment_status import PaymentStatus
+
+
+class Invoice:
+    """Represents a bill/invoice of a company."""
+
+    def __init__(
+        amount: float,
+        currency: Currency,
+        date: datetime,
+        due_date: datetime,
+        payment_status: PaymentStatus,
+    ):
+        """Initializes a new instance of :see:Bill.
+
+        Arguments:
+            amount:
+                The total amount payable (in money).
+
+            currency:
+                The currency in which the invoice
+                amount is listed.
+
+            date:
+                The date the bill came in.
+
+            due_date:
+                The date the bill should be paid.
+
+            payment_status:
+                Whether the bill was paid.
+        """
+
+        self.creditor = creditor
+        self.amount = amount
+        self.date = date
+        self.due_date = due_date
+        self.payment_status = payment_status

@@ -4,11 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 from autofin import models
 
-from .invoice import Invoice
-from .creditors import CreditorFactory
+from .creditors import CreditorFactory, CreditorInvoice
 
 
-class InvoiceManager:
+class InvoiceRetriever:
     """Helps managing invoices by retrieving information
     from creditors."""
 
@@ -18,7 +17,7 @@ class InvoiceManager:
 
         self.user = user
 
-    def get_latest_invoices(self) -> List[Invoice]:
+    def get_latest_invoices(self) -> List[CreditorInvoice]:
         """Gets the last invoice, paid or not from all
         registered creditors."""
 
