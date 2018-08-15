@@ -3,10 +3,11 @@ import structlog
 from aiohttp import web
 from urllib.parse import unquote
 
-from autofin import settings
+from autofin import settings, models
+from autofin.contact import ContactMethod
 from autofin.error import capture_error, capture_error_context
 from autofin.billing import InvoiceManager
-from autofin.messaging import MessageFormatter
+from autofin.contact import MessageFormatter
 
 LOGGER = structlog.get_logger(__name__)
 
@@ -37,7 +38,20 @@ async def on_sms_received(request):
         logger = logger.bind(**context)
         capture_error_context(**context)
 
-        logger.debug("Received SMS")
+        logger.info("Received SMS")
+
+        user_contact_method = (
+            models.UserContactMethod.select()
+            .where(
+                (models.UserContactMethod.value == from_)
+                & (models.UserContactMethod.method == ContactMethod.PHONE)
+            )
+            .first()
+        )
+
+        if not user_contact_method:
+            logger.error("Received SMS from unknown phone number")
+            return web.Response("")
 
         command = body.lower().replace(" ", "")
         if command == "getbills":
@@ -46,7 +60,7 @@ async def on_sms_received(request):
             logger.error("Receive unknown command through SMS", command=command)
             return web.Response(text=MessageFormatter.unknown_command(command))
 
-        invoices = InvoiceManager().get_latest_invoices()
+        invoices = InvoiceManager(user_contact_method.user).get_latest_invoices()
         return web.Response(text=MessageFormatter.invoices(invoices))
     except Exception:
         error_id = capture_error()

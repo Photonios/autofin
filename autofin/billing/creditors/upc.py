@@ -6,12 +6,12 @@ from datetime import datetime
 from autofin import http, html
 from autofin.billing import PaymentStatus, Invoice
 
-from .creditor import Creditor
+from .creditor_impl import CreditorImpl
 
 LOGGER = structlog.get_logger(__name__)
 
 
-class UPC(Creditor):
+class UPC(CreditorImpl):
     """Provides access to UPC bills."""
 
     def __init__(self, email: str, password: str) -> None:

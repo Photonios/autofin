@@ -42,11 +42,19 @@ class Invoice:
     def __str__(self):
         """Gets a human-readable textual representation of this invoice."""
 
+        payment_status_map = {
+            PaymentStatus.UNPAID: "unpaid",
+            PaymentStatus.PAID_UNCONFIRMED: "paid, unconfirmed",
+            PaymentStatus.PAID_CONFIRMED: "paid, confirmed",
+        }
+
         textual = "%s" % self.creditor
         textual += "\nDate: %s" % self.date.strftime("%d-%b-%Y")
         textual += "\nDue on: %s" % self.due_date.strftime("%d-%b-%Y")
         textual += "\nAmount: %s RON" % self.amount
-        textual += "\nStatus: %s" % self.payment_status.upper()
+        textual += (
+            "\nStatus: %s" % payment_status_map.get(self.payment_status) or "unknown"
+        )
 
         return textual
 

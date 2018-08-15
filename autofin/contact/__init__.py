@@ -1,2 +1,2 @@
-from .notify import notify_one, notify_all
+from .contact_method import ContactMethod
 from .message_formatter import MessageFormatter

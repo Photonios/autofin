@@ -33,8 +33,19 @@ class MigrateCommand(BaseCommand):
     def run(self):
         from autofin import models
         from autofin.db import database
+        from autofin.billing.creditors import CreditorID
 
-        database.create_tables([models.User, models.PhoneNumber, models.Creditor])
+        database.create_tables(
+            [
+                models.Creditor,
+                models.User,
+                models.UserCreditorConfig,
+                models.UserContactMethod,
+            ]
+        )
+
+        for name, id in CreditorID.choices():
+            models.Creditor.replace(id=id, name=name).execute()
 
 
 with open(

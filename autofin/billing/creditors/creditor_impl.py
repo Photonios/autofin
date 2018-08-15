@@ -1,4 +1,4 @@
-class Creditor:
+class CreditorImpl:
     """Base class for creditors."""
 
     def __init__(self, name: str) -> None:

@@ -1,14 +1,13 @@
 from typing import List
 
 from autofin import settings
-from autofin.billing import Invoice
 
 
 class MessageFormatter:
     """Assists in formatting notification messages."""
 
     @staticmethod
-    def invoices(invoices: List[Invoice]) -> str:
+    def invoices(invoices: List["Invoice"]) -> str:
         """Formats a message with a list of invoices."""
         invoices = "\n\n".join([str(invoice) for invoice in invoices])
 

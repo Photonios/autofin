@@ -8,12 +8,13 @@ class GlorifiedEnum:
     @classmethod
     def all(cls) -> List:
         """Gets all possible options from this enum."""
-        values = [value for key, value in cls.__dict__.items() if key.isupper()]
-
-        return sorted(values, reverse=True)
+        return [value for _, value in cls.choices()]
 
     @classmethod
     def choices(cls) -> List[Tuple[str, str]]:
         """Gets a list of tuples describing the possible
         "choices" this enum offers. (name, value)."""
-        return [(item, item.title()) for item in cls.all()]
+        return sorted(
+            [(key, value) for key, value in cls.__dict__.items() if key.isupper()],
+            key=lambda item: item[1],
+        )

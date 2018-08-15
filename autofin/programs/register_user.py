@@ -1,44 +1,6 @@
 import argparse
-import structlog
 
-from typing import Optional
-
-from autofin import models, crypto
-
-LOGGER = structlog.get_logger(__name__)
-
-
-def register_user(
-    first_name: str,
-    middle_name: Optional[str],
-    last_name: str,
-    email: str,
-    password: str,
-) -> None:
-    """Registers a new user."""
-
-    password = crypto.hash_password(email, password)
-    print(password)
-
-    user = models.User(
-        first_name=first_name,
-        middle_name=middle_name or None,
-        last_name=last_name,
-        email=email,
-        password=password,
-    )
-
-    user.save()
-
-    LOGGER.info(
-        "Created new user",
-        id=user.id,
-        first_name=first_name,
-        middle_name=middle_name or None,
-        last_name=last_name,
-        email=email,
-        passwod=password,
-    )
+from autofin import user
 
 
 if __name__ == "__main__":
@@ -53,8 +15,16 @@ if __name__ == "__main__":
     parser.add_argument("--last-name", dest="last_name", action="store", required=True)
     parser.add_argument("--email", dest="email", action="store", required=True)
     parser.add_argument("--password", dest="password", action="store", required=True)
+    parser.add_argument(
+        "--phone-number", dest="phone_number", action="store", required=False
+    )
 
     args = parser.parse_args()
-    register_user(
-        args.first_name, args.middle_name, args.last_name, args.email, args.password
+    user.create(
+        args.first_name,
+        args.middle_name,
+        args.last_name,
+        args.email,
+        args.password,
+        args.phone_number,
     )
