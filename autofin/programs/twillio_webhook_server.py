@@ -40,27 +40,24 @@ async def on_sms_received(request):
 
         logger.info("Received SMS")
 
-        user_contact_method = (
-            models.UserContactMethod.select()
-            .where(
-                (models.UserContactMethod.value == from_)
-                & (models.UserContactMethod.method == ContactMethod.PHONE)
-            )
-            .first()
-        )
-
-        if not user_contact_method:
+        user = models.User.by_phone_number(from_)
+        if not user:
             logger.error("Received SMS from unknown phone number")
             return web.Response("")
 
+        context["user"] = user
+        logger = logger.bind(**context)
+        capture_error_context(**context)
+
         command = body.lower().replace(" ", "")
-        if command == "getbills":
+        bill_commands = ["getbills", "bills", "invoices", "getinvoices"]
+        if command in bill_commands:
             logger.info("Received command through SMS", command=command)
         else:
             logger.error("Receive unknown command through SMS", command=command)
             return web.Response(text=MessageFormatter.unknown_command(command))
 
-        invoices = InvoiceManager(user_contact_method.user).get_latest_invoices()
+        invoices = InvoiceManager(user).get_latest_invoices()
         return web.Response(text=MessageFormatter.invoices(invoices))
     except Exception:
         error_id = capture_error()
