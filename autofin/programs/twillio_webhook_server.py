@@ -58,7 +58,10 @@ async def on_sms_received(request):
             return web.Response(text=MessageFormatter.unknown_command(command))
 
         invoices = InvoiceManager(user).get_latest_invoices()
-        return web.Response(text=MessageFormatter.invoices(invoices))
+        message = MessageFormatter.invoices(invoices)
+
+        logger.info("Send a message back", message=message)
+        return web.Response(text=message)
     except Exception:
         error_id = capture_error()
         return web.Response(text=MessageFormatter.error(error_id))
